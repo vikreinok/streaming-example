@@ -1,0 +1,13 @@
+Streaming:
+<div class="progress-container">
+  @for (message of progressMessages; track message) {
+    <div>
+      <strong>{{ message.status }}</strong>: {{ message.percentage }}%
+    </div>
+  }
+  @if (isCompleted) {
+    <div class="completion-message">
+      Task Completed!
+    </div>
+  }
+</div>

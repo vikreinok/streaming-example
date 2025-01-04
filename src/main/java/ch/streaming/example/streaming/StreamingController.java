@@ -1,13 +1,9 @@
 package ch.streaming.example.streaming;
 
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
-
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 /**
  *
@@ -15,25 +11,39 @@ import java.util.concurrent.Executors;
 @RestController
 public class StreamingController {
 
-    private ExecutorService executor
-            = Executors.newCachedThreadPool();
 
-    @GetMapping("/stream")
-    public ResponseEntity<StreamingResponseBody> handleRbe() {
-        StreamingResponseBody responseBody = response -> {
-            for (int i = 1; i <= 1000; i++) {
-                try {
-                    Thread.sleep(10);
-                    response.write(("Data stream line - " + i + "\n").getBytes());
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+
+    @GetMapping(value = "/api/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter streamTask() {
+        SseEmitter emitter = new SseEmitter();
+
+        // Run the task asynchronously to avoid blocking the request thread
+        new Thread(() -> {
+            try {
+                emitter.send(SseEmitter.event().name("status").data("Started").id("0"));
+
+                for (int i = 1; i <= 100; i++) {
+                    try {
+                        Thread.sleep(10); // Simulate task progress
+                    } catch (InterruptedException e) {
+                        emitter.completeWithError(e);
+                        return;
+                    }
+                    emitter.send(SseEmitter.event().name("status").data("Loading " + i).id(String.valueOf(i)));
                 }
+
+                emitter.send(SseEmitter.event().name("status").data("Done").id("100"));
+                emitter.complete(); // Indicate task completion
+            } catch (Exception e) {
+                emitter.completeWithError(e); // Handle any errors
             }
-        };
-        return ResponseEntity.ok()
-                .contentType(MediaType.TEXT_PLAIN)
-                .body(responseBody);
+        }).start();
+
+        return emitter;
     }
+
+
+
 
 
 //    @GetMapping(value = "/steam2", produces = MediaType.APPLICATION_STREAM_JSON_VALUE)

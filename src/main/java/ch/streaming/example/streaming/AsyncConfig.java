@@ -11,11 +11,12 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @EnableAsync
 public class AsyncConfig implements WebMvcConfigurer {
 
+
   @Override
   public void configureAsyncSupport(AsyncSupportConfigurer configurer) {
     
     configurer.setTaskExecutor(mvcTaskExecutor());
-    configurer.setDefaultTimeout(30_000);
+    configurer.setDefaultTimeout(10_000);
   }
 
   @Bean

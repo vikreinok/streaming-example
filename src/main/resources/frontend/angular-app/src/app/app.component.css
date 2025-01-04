@@ -1,0 +1,10 @@
+.progress-container {
+  font-family: Arial, sans-serif;
+  padding: 10px;
+}
+
+.completion-message {
+  margin-top: 20px;
+  color: green;
+  font-weight: bold;
+}
