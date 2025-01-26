@@ -1,43 +1,63 @@
-import {Component, OnInit} from '@angular/core';
-import {HttpClient} from '@angular/common/http';
+import {ChangeDetectorRef, Component, OnDestroy, OnInit} from '@angular/core';
+import {Observable, Subject, takeUntil} from 'rxjs';
+
+export interface Result {
+  status: string;
+  percentage: number;
+}
 
 @Component({
   selector: 'streaming-example',
   templateUrl: './app.component.html',
   standalone: true,
-  styleUrl: './app.component.css'
 })
-export class AppComponent implements OnInit {
-  progressMessages: { status: string; percentage: number }[] = [];
+export class AppComponent implements OnInit, OnDestroy {
+  public progressMessages: Result[] = [];
   isCompleted = false;
 
-  constructor(private http: HttpClient) {
+  private destroy$: Subject<void> = new Subject();
+
+  constructor(private cdr: ChangeDetectorRef) {
   }
 
   ngOnInit(): void {
-    this.consumeTaskStream();
+    this.consumeSse('api/stream').pipe(
+      takeUntil(this.destroy$) // Automatically unsubscribe on destroy
+    ).subscribe({
+      next: (message) => {
+        console.log(message)
+        this.progressMessages.push(message)
+        this.cdr.detectChanges();
+      },
+      error: (err) => console.error('Error with SSE:', err),
+    });
   }
 
-  consumeTaskStream(): void {
-    const eventSource = new EventSource('api/stream', { withCredentials: false },); // Using EventSource for streaming
+  consumeSse(url: string): Observable<Result> {
+    return new Observable<Result>((observer) => {
+      const eventSource = new EventSource(url);
 
-    eventSource.onmessage = (event) => {
-      console.log(event)
-      const data = JSON.parse(event.data);
-      this.progressMessages.push(data);
+      eventSource.onmessage = (event) => {
 
-      if (data.status === 'Done' && data.percentage === 100) {
-        this.isCompleted = true;
+        const data = JSON.parse(event.data);
+        observer.next(data);
+      };
+
+      eventSource.onerror = (error) => {
+        observer.error(error);
         eventSource.close();
-      }
-    };
+      };
 
-    eventSource.onerror = (error) => {
-      console.error('Stream encountered an error', error);
-      eventSource.close();
-    };
+      return () => {
+        eventSource.close();
+      };
+    });
   }
 
-constructor() {
-} }
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+}
 

@@ -11,43 +11,26 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 @RestController
 public class StreamingController {
 
-
-
     @GetMapping(value = "/api/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter streamTask() {
         SseEmitter emitter = new SseEmitter();
 
-        // Run the task asynchronously to avoid blocking the request thread
         new Thread(() -> {
             try {
-                emitter.send(SseEmitter.event().name("status").data("Started").id("0"));
-
                 for (int i = 1; i <= 100; i++) {
-                    try {
-                        Thread.sleep(10); // Simulate task progress
-                    } catch (InterruptedException e) {
-                        emitter.completeWithError(e);
-                        return;
-                    }
-                    emitter.send(SseEmitter.event().name("status").data("Loading " + i).id(String.valueOf(i)));
-                }
+                    Thread.sleep(100);
 
-                emitter.send(SseEmitter.event().name("status").data("Done").id("100"));
-                emitter.complete(); // Indicate task completion
+                    Result result = new Result(i, Status.values()[Math.min(i / 30, Status.values().length - 1)]);
+
+                    emitter.send(result);
+                }
+                emitter.complete();
             } catch (Exception e) {
-                emitter.completeWithError(e); // Handle any errors
+                emitter.completeWithError(e);
             }
+
         }).start();
 
         return emitter;
     }
-
-
-
-
-
-//    @GetMapping(value = "/steam2", produces = MediaType.APPLICATION_STREAM_JSON_VALUE)
-//    public Flux<Temerature> streamJsonObjects() {
-//        return Flux.interval(Duration.ofSeconds(1)).map(i -> new Temerature("Name" + i, i.intValue()));
-//    }
 }
