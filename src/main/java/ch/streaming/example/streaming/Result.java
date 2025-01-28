@@ -1,9 +1,11 @@
 package ch.streaming.example.streaming;
 
+import java.util.List;
+
 /**
  *
  */
-public record Result(int percentage, Status status) {
+public record Result(int percentage, Status status, List<String> loadedData) {
 
 }
 

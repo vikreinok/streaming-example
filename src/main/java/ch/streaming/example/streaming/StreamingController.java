@@ -5,6 +5,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import java.util.List;
+
 /**
  *
  */
@@ -20,7 +22,7 @@ public class StreamingController {
                 for (int i = 1; i <= 100; i++) {
                     Thread.sleep(100);
 
-                    Result result = new Result(i, Status.values()[Math.min(i / 30, Status.values().length - 1)]);
+                    Result result = new Result(i, Status.values()[Math.min(i / 30, Status.values().length - 1)], List.of("data batch " + i));
 
                     emitter.send(result);
                 }
