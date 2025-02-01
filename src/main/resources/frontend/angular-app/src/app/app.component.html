@@ -1,11 +1,8 @@
-Streaming:
+Streaming response:
 <div>
   <div>
-    <strong>{{ progressMessages[progressMessages.length - 1].status }}</strong>: {{ progressMessages[progressMessages.length - 1].percentage }}%
+    <strong>{{ lastResponse.status }}</strong>: {{ lastResponse.percentage }}%
+    <br>
+    Rows loaded: {{loadedData.length}}
   </div>
-  @if (isCompleted) {
-    <div>
-      Task Completed!
-    </div>
-  }
 </div>

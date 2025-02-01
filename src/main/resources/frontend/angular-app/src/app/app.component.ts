@@ -4,6 +4,7 @@ import {Observable, Subject, takeUntil} from 'rxjs';
 export interface Result {
   status: string;
   percentage: number;
+  data: string[];
 }
 
 @Component({
@@ -12,8 +13,8 @@ export interface Result {
   standalone: true,
 })
 export class AppComponent implements OnInit, OnDestroy {
-  public progressMessages: Result[] = [];
-  isCompleted = false;
+  public lastResponse: Result;
+  loadedData: string[] = [];
 
   private destroy$: Subject<void> = new Subject();
 
@@ -26,7 +27,8 @@ export class AppComponent implements OnInit, OnDestroy {
     ).subscribe({
       next: (message) => {
         console.log(message)
-        this.progressMessages.push(message)
+        this.lastResponse = message;
+        this.loadedData.push.apply(this.loadedData, message.data);
         this.cdr.detectChanges();
       },
       error: (err) => console.error('Error with SSE:', err),
